@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>臺灣物價分析：哪些類別漲最多？</title>
+    <script src="vendor/echarts.min.js"></script>
+    <style>
+* { box-sizing: border-box; }
+body { margin: 15px; font: 14px Arial, "Microsoft JhengHei", sans-serif; color: #222; line-height: 1.6; }
+h1 { font-size: 25px; margin: 8px 0; }
+h2 { font-size: 18px; margin: 0 0 5px; }
+p { margin: 6px 0; }
+select { font: inherit; padding: 2px; }
+a { color: #175b9b; }
+.charts { display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; margin-top: 12px; }
+.panel { border: 1px solid #aaa; padding: 10px; min-width: 0; }
+.main-panel { grid-row: span 2; }
+.chart { width: 100%; height: 260px; }
+.main-panel .chart { height: 540px; }
+.heat-panel .chart { height: 280px; }
+.note, #status { font-size: 12px; color: #666; }
+.finding { margin-top: 8px; padding: 5px 8px; background: #f2f2f2; font-size: 13px; }
+.key { display: inline-block; width: 10px; height: 10px; margin-right: 4px; }
+.source { margin-top: 12px; font-size: 12px; color: #666; }
+@media (max-width: 850px) {
+    .charts { grid-template-columns: 1fr; }
+    .main-panel { grid-row: auto; }
+    .main-panel .chart { height: 350px; }
+}
+@media (max-width: 500px) {
+    body { margin: 10px; }
+    h1 { font-size: 21px; }
+    .chart { height: 290px; }
+    .heat-panel .chart { height: 320px; }
+}
+    </style>
+</head>
+<body>
+    <h1>臺灣物價分析：哪些類別漲最多</h1>
+    <p>資料期間：2025 年 9 月至 2026 年 9 月。基期：2021 年平均 = 100（指數，不是售價）。</p>
+    <p id="status" role="status"></p>
+    <div class="charts">
+        <div class="panel main-panel">
+            <h2>1. 七大類別漲幅比較</h2>
+            <p>2026 年 9 月與 2025 年 9 月比較（年增率）。</p>
+            <div id="mainChart" class="chart"></div>
+            <p class="note"><span class="key" style="background:#c65a27"></span>上漲　<span class="key" ></span>橫軸為年增率（%），縱軸為消費類別。</p>
+            <p class="finding" id="barFinding"></p>
+        </div>
+        <div class="panel">
+            <h2>2. 物價指數變化</h2>
+            <label for="categorySelect">選擇類別：</label>
+            <select id="categorySelect" disabled></select>
+            <div id="rightUpChart" class="chart"></div>
+            <p class="note">橫軸為月份，縱軸為物價指數（2021 年平均 = 100）。深藍線為總指數，橘線為所選類別。</p>
+            <p class="finding" id="lineFinding"></p>
+        </div>
+        <div class="panel heat-panel">
+            <h2>3. 各月漲跌情況</h2>
+            <p>各類別和上個月相比，變動多少？</p>
+            <div id="rightDownChart" class="chart"></div>
+            <p class="note">橫軸為月份，縱軸為消費類別，顏色表示月增率（%）。橘色上漲、藍色下跌、白色接近不變；顏色越深，變動越大。</p>
+            <p class="finding" id="heatFinding"></p>
+        </div>
+    </div>
+    <p class="source">資料編製：行政院主計總處；來源：<a href="https://service.moea.gov.tw/EE521/common/Common.aspx?code=K&amp;no=2" target="_blank" rel="noopener">經濟部統計處</a>
+
+    <script>
+window.CPI_DATA = {
+  "meta": {
+    "title": "臺灣物價觀察：哪些類別漲最多？",
+    "region": "臺灣地區",
+    "base": "2021年（民國110年）平均=100",
+    "unit": "指數",
+    "start": "2025-09",
+    "end": "2026-09",
+    "retrievedOn": "2026-10-21",
+    "publisher": "經濟部統計處",
+    "originalProducer": "行政院主計總處",
+    "sourceTitle": "消費者物價指數－按基本分類分",
+    "sourceUrl": "https://service.moea.gov.tw/EE521/common/Common.aspx?code=K&no=2",
+    "notes": [
+      "原表欄名為「交通類」，本作品沿用原表名稱。",
+      "原表的年度平均、1–9月平均並非單月，已排除。",
+      "比較率依已公布至小數點後2位的指數自行計算，可能與官方用未四捨五入數值計算的變動率有微小差異。",
+      "2026-09較2025-09的變動率同時是年增率；其餘月份較2025-09的變動率不是年增率。"
+    ]
+  },
+  "categories": [
+    "總指數",
+    "食物類",
+    "衣著類",
+    "居住類",
+    "交通類",
+    "醫藥保健類",
+    "教養娛樂類",
+    "雜項類"
+  ],
+  "records": [
+    {
+      "month": "2025-09",
+      "values": {
+        "總指數": 109.82,
+        "食物類": 118.79,
+        "衣著類": 99.78,
+        "居住類": 109.77,
+        "交通類": 102.54,
+        "醫藥保健類": 109.14,
+        "教養娛樂類": 107.01,
+        "雜項類": 108.83
+      }
+    },
+    {
+      "month": "2025-10",
+      "values": {
+        "總指數": 110.33,
+        "食物類": 118.72,
+        "衣著類": 108.46,
+        "居住類": 109.03,
+        "交通類": 102.59,
+        "醫藥保健類": 108.97,
+        "教養娛樂類": 107.86,
+        "雜項類": 109.42
+      }
+    },
+    {
+      "month": "2025-11",
+      "values": {
+        "總指數": 110.16,
+        "食物類": 118.91,
+        "衣著類": 106.21,
+        "居住類": 109.08,
+        "交通類": 102.64,
+        "醫藥保健類": 108.86,
+        "教養娛樂類": 107.35,
+        "雜項類": 109.27
+      }
+    },
+    {
+      "month": "2025-12",
+      "values": {
+        "總指數": 110.24,
+        "食物類": 118.37,
+        "衣著類": 105.82,
+        "居住類": 109.26,
+        "交通類": 102.37,
+        "醫藥保健類": 108.93,
+        "教養娛樂類": 108.0,
+        "雜項類": 110.43
+      }
+    },
+    {
+      "month": "2026-01",
+      "values": {
+        "總指數": 110.22,
+        "食物類": 117.78,
+        "衣著類": 104.23,
+        "居住類": 109.54,
+        "交通類": 102.97,
+        "醫藥保健類": 109.3,
+        "教養娛樂類": 107.65,
+        "雜項類": 111.23
+      }
+    },
+    {
+      "month": "2026-02",
+      "values": {
+        "總指數": 110.91,
+        "食物類": 116.95,
+        "衣著類": 102.03,
+        "居住類": 109.85,
+        "交通類": 103.79,
+        "醫藥保健類": 109.58,
+        "教養娛樂類": 111.08,
+        "雜項類": 113.94
+      }
+    },
+    {
+      "month": "2026-03",
+      "values": {
+        "總指數": 110.36,
+        "食物類": 116.72,
+        "衣著類": 101.81,
+        "居住類": 109.89,
+        "交通類": 104.48,
+        "醫藥保健類": 109.67,
+        "教養娛樂類": 108.37,
+        "雜項類": 112.15
+      }
+    },
+    {
+      "month": "2026-04",
+      "values": {
+        "總指數": 111.21,
+        "食物類": 117.16,
+        "衣著類": 105.6,
+        "居住類": 110.05,
+        "交通類": 106.89,
+        "醫藥保健類": 109.72,
+        "教養娛樂類": 109.27,
+        "雜項類": 112.04
+      }
+    },
+    {
+      "month": "2026-05",
+      "values": {
+        "總指數": 111.42,
+        "食物類": 117.84,
+        "衣著類": 104.58,
+        "居住類": 110.29,
+        "交通類": 107.11,
+        "醫藥保健類": 109.44,
+        "教養娛樂類": 109.66,
+        "雜項類": 111.83
+      }
+    },
+    {
+      "month": "2026-06",
+      "values": {
+        "總指數": 111.96,
+        "食物類": 118.08,
+        "衣著類": 104.21,
+        "居住類": 111.73,
+        "交通類": 107.63,
+        "醫藥保健類": 109.79,
+        "教養娛樂類": 110.29,
+        "雜項類": 111.68
+      }
+    },
+    {
+      "month": "2026-07",
+      "values": {
+        "總指數": 112.33,
+        "食物類": 119.32,
+        "衣著類": 103.26,
+        "居住類": 112.05,
+        "交通類": 107.09,
+        "醫藥保健類": 109.78,
+        "教養娛樂類": 111.4,
+        "雜項類": 111.41
+      }
+    },
+    {
+      "month": "2026-08",
+      "values": {
+        "總指數": 112.33,
+        "食物類": 119.84,
+        "衣著類": 102.02,
+        "居住類": 112.2,
+        "交通類": 106.86,
+        "醫藥保健類": 109.68,
+        "教養娛樂類": 111.03,
+        "雜項類": 111.42
+      }
+    },
+    {
+      "month": "2026-09",
+      "values": {
+        "總指數": 112.82,
+        "食物類": 121.93,
+        "衣著類": 102.09,
+        "居住類": 112.38,
+        "交通類": 106.71,
+        "醫藥保健類": 109.9,
+        "教養娛樂類": 110.38,
+        "雜項類": 111.84
+      }
+    }
+  ]
+};
+
+var barChart, lineChart, heatChart;
+var cpiData;
+var categories;
+
+function calculateRate(current, previous) {
+    return (current / previous - 1) * 100;
+}
+function formatRate(value) {
+    return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+}
+
+function createBarChart() {
+    var first = cpiData.records[0];
+    var last = cpiData.records[cpiData.records.length - 1];
+    var ranking = [];
+    for (var i = 0; i < categories.length; i++) {
+        var name = categories[i];
+        ranking.push({ name: name, value: calculateRate(last.values[name], first.values[name]) });
+    }
+    ranking.sort(function (a, b) { return b.value - a.value; });
+    document.getElementById('barFinding').textContent = '2026 年 9 月較去年同月，' + ranking[0].name + '漲幅最高（' + formatRate(ranking[0].value) + '），' + ranking[ranking.length - 1].name + '最低（' + formatRate(ranking[ranking.length - 1].value) + '）。';
+    barChart.setOption({
+        textStyle: { fontFamily: 'Microsoft JhengHei, Arial, sans-serif' },
+        tooltip: { trigger: 'axis', valueFormatter: formatRate },
+        grid: { left: 10, right: 65, top: 25, bottom: 40, containLabel: true },
+        xAxis: { type: 'value', name: '年增率 (%)', nameLocation: 'middle', nameGap: 25 },
+        yAxis: { type: 'category', inverse: true, data: ranking.map(function (item) { return item.name; }) },
+        series: [{ type: 'bar', name: '年增率', barMaxWidth: 30,
+            label: { show: true, position: 'right', formatter: function (item) { return formatRate(item.value); } },
+            data: ranking.map(function (item) {
+                return { value: item.value, itemStyle: { color: item.value >= 0 ? '#c65a27' : '#24689b' } };
+            })
+        }]
+    });
+
+}
+
+function createLineChart() {
+    var category = document.getElementById('categorySelect').value;
+    var dates = [], totals = [], values = [];
+    for (var i = 0; i < cpiData.records.length; i++) {
+        var row = cpiData.records[i];
+        dates.push(row.month);
+        totals.push(row.values['總指數']);
+        values.push(row.values[category]);
+    }
+    document.getElementById('lineFinding').textContent =  category + '由 ' + values[0].toFixed(2) + ' 變為 ' + values[values.length - 1].toFixed(2) + '，期間變動 ' + formatRate(calculateRate(values[values.length - 1], values[0])) + '，代表整體食物價格變貴，但各項食品的實際漲幅不同。';
+    lineChart.setOption({
+        textStyle: { fontFamily: 'Microsoft JhengHei, Arial, sans-serif' },
+        color: ['#18304a', '#c65a27'],
+        tooltip: { trigger: 'axis', valueFormatter: function (value) { return value.toFixed(2); } },
+        legend: { data: ['總指數', category], selectedMode: false },
+        grid: { left: 10, right: 40, top: 45, bottom: 25, containLabel: true },
+        xAxis: { type: 'category', data: dates, boundaryGap: false, axisLabel: { hideOverlap: true } },
+        yAxis: { type: 'value', name: '指數', scale: true },
+        series: [
+            { name: '總指數', type: 'line', data: totals },
+            { name: category, type: 'line', data: values }
+        ]
+    }, true);
+}
+
+function createHeatChart() {
+    var dates = [], values = [];
+    var maxRate = 1;
+    for (var i = 1; i < cpiData.records.length; i++) {
+        dates.push(cpiData.records[i].month);
+        for (var j = 0; j < categories.length; j++) {
+            var name = categories[j];
+            var rate = calculateRate(cpiData.records[i].values[name], cpiData.records[i - 1].values[name]);
+            values.push([i - 1, j, rate]);
+            maxRate = Math.max(maxRate, Math.abs(rate));
+        }
+    }
+    var largest = values.reduce(function (a, b) { return Math.abs(b[2]) > Math.abs(a[2]) ? b : a; });
+    document.getElementById('heatFinding').textContent = '本期間單月變動最大的是 ' + dates[largest[0]] + ' 的' + categories[largest[1]] + '（' + formatRate(largest[2]) + '）。月增率是和上月比較，與左圖年增率不同。';
+    maxRate = Math.ceil(maxRate);
+    heatChart.setOption({
+        textStyle: { fontFamily: 'Microsoft JhengHei, Arial, sans-serif' },
+        tooltip: { formatter: function (item) {
+            return dates[item.value[0]] + ' ' + categories[item.value[1]] + '<br>月增率：' + formatRate(item.value[2]);
+        } },
+        grid: { left: 10, right: 20, top: 10, bottom: 75, containLabel: true },
+        xAxis: { type: 'category', data: dates, axisLabel: { rotate: 45, interval: 0, fontSize: 10 } },
+        yAxis: { type: 'category', data: categories, inverse: true, axisLabel: { fontSize: 11 } },
+        visualMap: { min: -maxRate, max: maxRate, calculable: false,
+            orient: 'horizontal', left: 'center', bottom: 0, itemHeight: 120,
+            text: ['上漲 %', '下跌 %'], inRange: { color: ['#24689b', '#ffffff', '#c65a27'] }
+        },
+        series: [{ type: 'heatmap', data: values, itemStyle: { borderColor: '#ddd', borderWidth: 1 } }]
+    });
+}
+
+function startDashboard(data) {
+    if (!data || !Array.isArray(data.records) || data.records.length !== 13 || !Array.isArray(data.categories)) {
+        document.getElementById('status').textContent = '資料格式錯誤，請檢查下方物價資料。';
+        return;
+    }
+    for (var i = 0; i < data.records.length; i++) {
+        for (var j = 0; j < data.categories.length; j++) {
+            var value = data.records[i].values[data.categories[j]];
+            if (!Number.isFinite(value) || value <= 0) {
+                document.getElementById('status').textContent = '資料含有無效指數，請檢查下方物價資料。';
+                return;
+            }
+        }
+    }
+    cpiData = data;
+    categories = data.categories.filter(function (name) { return name !== '總指數'; });
+    barChart = echarts.init(document.getElementById('mainChart'));
+    lineChart = echarts.init(document.getElementById('rightUpChart'));
+    heatChart = echarts.init(document.getElementById('rightDownChart'));
+    var select = document.getElementById('categorySelect');
+    for (var i = 0; i < categories.length; i++) {
+        select.add(new Option(categories[i], categories[i]));
+    }
+    select.value = '食物類';
+    select.disabled = false;
+    select.addEventListener('change', createLineChart);
+    createBarChart();
+    createLineChart();
+    createHeatChart();
+    window.addEventListener('resize', function () { barChart.resize(); lineChart.resize(); heatChart.resize(); });
+}
+
+if (typeof echarts === 'undefined') {
+    document.getElementById('status').textContent = '請保留 vendor/echarts.min.js。';
+} else {
+    startDashboard(window.CPI_DATA);
+}
+    </script>
+</body>
+</html>
